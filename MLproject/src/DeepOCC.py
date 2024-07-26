@@ -120,8 +120,8 @@ class DeepOCC(object):
         self.net = self.trainer.train(dataset, self.net)
         self.R = float(self.trainer.R.cpu().data.numpy())  # get float
         self.c = self.trainer.c.cpu().data.numpy().tolist()  # get as list
-        self.results['train_time'] = self.trainer.train_time
         self.results['td_ascores'] = self.trainer.td_ascores
+        self.results['train_time'] = self.trainer.train_time
 
     def test(self, dataset: BaseADDataset, device: str = 'cuda', n_jobs_dataloader: int = 0):
         """Tests the Deep SAD model on the test Esempi."""

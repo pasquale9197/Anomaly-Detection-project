@@ -21,6 +21,8 @@ dataset_name = 'mnist-original'
 n_al_iter = 5
 numQueriesRate = 0.01
 
+
+
 # Load MNIST dataset
 dataset = MNISTADDDataset(root=root, dataset_name=dataset_name)
 
@@ -70,73 +72,63 @@ for al_iter_idx in range(n_al_iter + 1):
     aucs.append(auc)
     total_dists.append(dist)
     total_z_datas.append(z_data)
-    #total_z_centers.append(Mnist_trainer_obj.trainer.c.cpu().numpy().copy())
+    #total_z_centers.append(trainer.c.cpu().numpy().copy().tolist())
 
-    # Assuming dataset contains test data to visualize
-    _, test_loader = dataset.loaders(batch_size=1, shuffle_test=False)
+    print('aucs: ',aucs)
+    # print('total dist:', total_dists)
+    # print('total z dates: ', total_z_datas)
 
-    # Convert distances to numpy array
-    dist = np.array(dist)
 
-    # Aggregate distances by taking the maximum across all classes
-    aggregated_dist = np.max(dist, axis=1)
+##################################################################################################################
+################################################################################################################
+##################################################################################################################
+## plotting data ###############################################################################################
+_, test_loader = dataset.loaders(batch_size=1, shuffle_test=False)
 
-    # Debugging: Print shapes of dist and anomalies
-    print(f"Shape of aggregated_dist: {aggregated_dist.shape}")
+dist = np.array(dist)
 
-    # Experiment with different percentiles to adjust the threshold
-    for percentile in [60, 75, 85]:
-        threshold = np.percentile(aggregated_dist, percentile)
-        anomalies = aggregated_dist > threshold
-        print(f"Threshold at {percentile}th percentile: {threshold}, Number of anomalies detected: {np.sum(anomalies)}")
+# Aggregate distances by taking the maximum across all classes
+aggregated_dist = np.max(dist, axis=1)
 
-    # Choose the threshold to use (e.g., 95th percentile)
-    threshold = np.percentile(aggregated_dist, 70)
-    anomalies = aggregated_dist > threshold
+# Calculate threshold and detect anomalies
+threshold = np.percentile(aggregated_dist, 95)
+anomalies = aggregated_dist > threshold
 
-    # Plot distance distribution with chosen threshold
-    plt.figure(figsize=(10, 5))
-    plt.hist(aggregated_dist, bins=50, alpha=0.7, label='Aggregated Distances')
-    plt.axvline(threshold, color='red', linestyle='dashed', linewidth=2, label=f'Threshold ({threshold:.4f})')
-    plt.title('Distribution of Aggregated Distances')
-    plt.xlabel('Distance')
-    plt.ylabel('Frequency')
-    plt.legend()
-    plt.show()
+fig, axes = plt.subplots(2, 5, figsize=(10, 4))
+axes = axes.ravel()
 
-    print(f"Shape of anomalies: {anomalies.shape}")
+normal_count = 0
+anomaly_count = 0
 
-    # Debugging: Print the number of anomalies detected
-    print(f"Number of anomalies detected: {np.sum(anomalies)}")
 
-    # Plotting
-    fig, axes = plt.subplots(2, 5, figsize=(10, 4))
-    axes = axes.ravel()
 
-    # Plot normal and anomaly examples
-    normal_count = 0
-    anomaly_count = 0
+for idx, (inputs, labels, semi_target, index) in enumerate(test_loader):  # Adjusted unpacking
+    if normal_count < 5 and not anomalies[idx]:
+        axes[normal_count].imshow(inputs[0].cpu().numpy().reshape(28, 28), cmap='gray')
+        axes[normal_count].set_title(f'Normal\nLabel: {labels.item()}')
+        axes[normal_count].axis('off')
+        normal_count += 1
 
-    for idx, (inputs, labels, semi_target, index) in enumerate(test_loader):  # Adjusted unpacking
-        if normal_count < 5 and not anomalies[idx]:
-            print(f"Normal Index: {idx}, Distance: {aggregated_dist[idx]}")
-            axes[normal_count].imshow(inputs[0].cpu().numpy().reshape(28, 28), cmap='gray')
-            axes[normal_count].set_title('Normal')
-            axes[normal_count].axis('off')
-            normal_count += 1
+    if anomaly_count < 5 and anomalies[idx]:
+        axes[anomaly_count + 5].imshow(inputs[0].cpu().numpy().reshape(28, 28), cmap='gray')
+        axes[anomaly_count + 5].set_title(f'Anomaly\nLabel: {labels.item()}')
+        axes[anomaly_count + 5].axis('off')
+        anomaly_count += 1
 
-        if anomaly_count < 5 and anomalies[idx]:
-            print(f"Anomaly Index: {idx}, Distance: {aggregated_dist[idx]}")
-            axes[anomaly_count + 5].imshow(inputs[0].cpu().numpy().reshape(28, 28), cmap='gray')
-            axes[anomaly_count + 5].set_title('Anomaly')
-            axes[anomaly_count + 5].axis('off')
-            anomaly_count += 1
+    if normal_count >= 5 and anomaly_count >= 5:
+        break
 
-        if normal_count >= 5 and anomaly_count >= 5:
-            break
+plt.tight_layout()
+plt.show()
 
-    plt.tight_layout()
-    plt.show()
+# Plot histogram of the number of anomalies detected
+plt.figure(figsize=(10, 5))
+plt.hist(anomalies, bins=len(anomalies), alpha=0.7, label='Number of Anomalies Detected')
+plt.title('Histogram of Number of Anomalies Detected')
+plt.xlabel('Iteration')
+plt.ylabel('Number of Anomalies')
+plt.legend()
+plt.show()
 
-print('AUCs: ', aucs)
+print('Aucs: ', aucs)
 print('total_dists: ', total_dists)

@@ -38,6 +38,7 @@ class DeepSVDMnistTrainer(BaseTrainer):
         self.test_time = None
         self.test_scores = None
 
+
     def train(self, dataset: MNISTADDDataset, net: BaseNet):
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
         net = net.to(self.device)
@@ -101,7 +102,7 @@ class DeepSVDMnistTrainer(BaseTrainer):
 
         return net
 
-    def test(self, dataset: MNISTADDDataset, net: BaseNet, silent=True):
+    def test(self, dataset: MNISTADDDataset, net: BaseNet, silent=False):
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
         net = net.to(self.device)
 
