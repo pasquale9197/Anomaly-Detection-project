@@ -8,9 +8,9 @@ from itertools import product
 from sklearn.metrics import roc_auc_score
 from torch.utils.data.dataloader import DataLoader
 
-from base.base_net import BaseNet
-from base.base_trainer import BaseTrainer
-from datasets.base_dataset import BaseADDataset
+from MLProject.MLproject.src.base.base_net import BaseNet
+from MLProject.MLproject.src.base.base_trainer import BaseTrainer
+from MLProject.MLproject.src.datasets.base_dataset import BaseADDataset
 
 class DeepOCCUAITrainer(BaseTrainer):
 
@@ -40,7 +40,7 @@ class DeepOCCUAITrainer(BaseTrainer):
 
     def train(self, dataset: BaseADDataset, net: BaseNet):
 
-        # Get train data loader
+        # Get train Esempi loader
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set device for network
@@ -78,7 +78,7 @@ class DeepOCCUAITrainer(BaseTrainer):
                 outputs = net(inputs)
                 dist = torch.sum((outputs - self.c) ** 2, dim=1)  # anomaly score
 
-                if self.al_loss=='one_class_uai':  # L_uai(for labeled data) + L_base (for the entire data)
+                if self.al_loss=='one_class_uai':  # L_uai(for labeled Esempi) + L_base (for the entire Esempi)
                     losses = dist.clone()
 
                 elif self.al_loss=='soft_boundary_uai':
@@ -130,7 +130,7 @@ class DeepOCCUAITrainer(BaseTrainer):
 
     def test(self, dataset: BaseADDataset, net: BaseNet, silent=True):
 
-        # Get test data loader
+        # Get test Esempi loader
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set device for network
@@ -191,7 +191,7 @@ class DeepOCCUAITrainer(BaseTrainer):
             print('Finished testing.')
 
     def init_center_c(self, train_loader: DataLoader, net: BaseNet, eps=0.1):
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
+        """Initialize hypersphere center c as the mean from an initial forward pass on the Esempi."""
         n_samples = 0
         c = torch.zeros(net.rep_dim, device=self.device)
 

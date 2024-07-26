@@ -99,7 +99,7 @@ class DeepOCC(object):
     def train(self, dataset: BaseADDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 50,
               batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
               n_jobs_dataloader: int = 0, al_mode=None, al_loss=-1):
-        """Trains the Deep OCC model on the training data."""
+        """Trains the Deep OCC model on the training Esempi."""
         self.al_mode = al_mode
         self.al_loss = al_loss
 
@@ -124,7 +124,7 @@ class DeepOCC(object):
         self.results['td_ascores'] = self.trainer.td_ascores
 
     def test(self, dataset: BaseADDataset, device: str = 'cuda', n_jobs_dataloader: int = 0):
-        """Tests the Deep SAD model on the test data."""
+        """Tests the Deep SAD model on the test Esempi."""
 
         self.trainer.test(dataset, self.net)
 

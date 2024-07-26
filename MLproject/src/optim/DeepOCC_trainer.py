@@ -10,9 +10,9 @@ from torch.utils.data.dataloader import DataLoader
 
 
 
-from base.base_net import BaseNet
-from base.base_trainer import BaseTrainer
-from datasets.base_dataset import BaseADDataset
+from MLProject.MLproject.src.base.base_net import BaseNet
+from MLProject.MLproject.src.base.base_trainer import BaseTrainer
+from MLProject.MLproject.src.datasets.base_dataset import BaseADDataset
 
 
 class DeepOCCTrainer(BaseTrainer):
@@ -43,7 +43,7 @@ class DeepOCCTrainer(BaseTrainer):
 
     def train(self, dataset: BaseADDataset, net: BaseNet):
 
-        # Get train data loader
+        # Get train Esempi loader
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set device for network
@@ -101,7 +101,7 @@ class DeepOCCTrainer(BaseTrainer):
 
                 if self.al_loss=='nce' or self.al_loss=='soft_boundary_nce':
                     if sum(dataset.train_set.label_known) > 0:
-                        if len(dataset.idx_labeled_normal) > 0 and len(dataset.idx_labeled_abnormal) > 0:  # NCE uses only labeled data
+                        if len(dataset.idx_labeled_normal) > 0 and len(dataset.idx_labeled_abnormal) > 0:  # NCE uses only labeled Esempi
 
                             inputs_labeled = dataset.train_set.data[dataset.idx_labeled_normal + dataset.idx_labeled_abnormal]
                             outputs_labeled = net(inputs_labeled.to(self.device))
@@ -153,7 +153,7 @@ class DeepOCCTrainer(BaseTrainer):
 
     def test(self, dataset: BaseADDataset, net: BaseNet, silent=True):
         
-        # Get test data loader
+        # Get test Esempi loader
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set device for network
@@ -214,7 +214,7 @@ class DeepOCCTrainer(BaseTrainer):
             print('Finished testing.')
 
     def init_center_c(self, train_loader: DataLoader, net: BaseNet, eps=0.1):
-        """Initialize hypersphere center c as the mean from an initial forward pass on the data."""
+        """Initialize hypersphere center c as the mean from an initial forward pass on the Esempi."""
         n_samples = 0
         c = torch.zeros(net.rep_dim, device=self.device)
 

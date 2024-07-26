@@ -6,9 +6,9 @@ import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import roc_auc_score
 
-from base.base_net import BaseNet
-from base.base_trainer import BaseTrainer
-from datasets.base_dataset import BaseADDataset
+from MLProject.MLproject.src.base.base_net import BaseNet
+from MLProject.MLproject.src.base.base_trainer import BaseTrainer
+from MLProject.MLproject.src.datasets.base_dataset import BaseADDataset
 
 class AETrainer(BaseTrainer):
 
@@ -23,7 +23,7 @@ class AETrainer(BaseTrainer):
         self.test_time = None
 
     def train(self, dataset: BaseADDataset, ae_net: BaseNet):
-        # Get train data loader
+        # Get train Esempi loader
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set loss
@@ -75,7 +75,7 @@ class AETrainer(BaseTrainer):
         return ae_net
 
     def test(self, dataset: BaseADDataset, ae_net: BaseNet):
-        # Get test data loader
+        # Get test Esempi loader
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set loss

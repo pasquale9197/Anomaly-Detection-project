@@ -1,4 +1,3 @@
-
 import pdb
 import torch
 import numpy as np
@@ -44,7 +43,7 @@ class ODDSADDataset(BaseADDataset):
 
         if ratio_pollution == 0:
             self.test_set = ODDSDataset(root=self.root, dataset_name=dataset_name, ratio_pollution=self.ratio_pollution,
-                                        random_state=random_state, train=False)  # the entire data
+                                        random_state=random_state, train=False)  # the entire Esempi
             self.tn = np.where(self.test_set.targets==0)[0].__len__()
             self.ta = np.where(self.test_set.targets==1)[0].__len__()
 

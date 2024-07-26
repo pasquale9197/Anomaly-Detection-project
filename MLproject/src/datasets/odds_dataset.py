@@ -73,7 +73,7 @@ class ODDSDataset(Dataset):
 
             self.n_outlier = 0
 
-        else:  # Transductive setting: training data == test data
+        else:  # Transductive setting: training Esempi == test Esempi
             if ratio_pollution == max_rp_dict[self.dataset_name]:
                 X_train = np.concatenate((X[idx_norm], X[idx_out]))
                 y_train = np.concatenate((y[idx_norm], y[idx_out]))
@@ -89,7 +89,7 @@ class ODDSDataset(Dataset):
             # X_test = X_train.copy()
             # y_test = y_train.copy()
 
-        # Standardize data (per feature Z-normalization, i.e. zero-mean and unit variance)
+        # Standardize Esempi (per feature Z-normalization, i.e. zero-mean and unit variance)
         scaler = StandardScaler().fit(X_train.astype(np.float32))
         X_train_stand = scaler.transform(X_train.astype(np.float32))
 

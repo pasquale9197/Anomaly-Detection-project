@@ -11,8 +11,8 @@ class BaseADDataset(ABC):
         self.normal_classes = None #tuple with original class that define normal class
         self.outlier_classes = None #tuple with original class that define outlier class
 
-        self.train_set = None #type torch.utils.data.Dataset
-        self.test_set = None  # type torch.utils.data.Dataset
+        self.train_set = None #type torch.utils.Esempi.Dataset
+        self.test_set = None  # type torch.utils.Esempi.Dataset
 
     @abstractmethod
     def loaders(self, batch_size: int, shuffle_train=True, shuffle_test=False,

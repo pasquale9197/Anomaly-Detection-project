@@ -69,7 +69,7 @@ warnings.filterwarnings("ignore")
 @click.option('--num_threads', type=int, default=0,
               help='Number of threads used for parallelizing CPU operations. 0 means that all resources are used.')
 @click.option('--n_jobs_dataloader', type=int, default=0,
-              help='Number of workers for data loading. 0 means that the data will be loaded in the main process.')
+              help='Number of workers for Esempi loading. 0 means that the Esempi will be loaded in the main process.')
 
 
 def main(dataset_name, ratio_pollution, al_loss, qs_type, ps_abnormal, seed, n_repeat,
@@ -176,7 +176,7 @@ def main(dataset_name, ratio_pollution, al_loss, qs_type, ps_abnormal, seed, n_r
         trainset_label_known = dataset.train_set.label_known
         trainset_ps_label_known = dataset.train_set.ps_label_known  # pseudo label
 
-        n_known_normal = 0  # number of quried normal data
+        n_known_normal = 0  # number of quried normal Esempi
         n_known_outlier = 0
 
         ####################################################################
@@ -298,7 +298,7 @@ def main(dataset_name, ratio_pollution, al_loss, qs_type, ps_abnormal, seed, n_r
                     queryIdx = candidate
                     trainset_label_known[queryIdx] = 1
                 elif len(candidate)==0:
-                    print('No more data to query (All data have been queried)')
+                    print('No more Esempi to query (All Esempi have been queried)')
                     queryIdx = []
 
                 total_label_known.append(trainset_label_known.copy())
