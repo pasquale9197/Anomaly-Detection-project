@@ -3,13 +3,16 @@ import sys
 from abc import ABC
 from pathlib import Path
 
+import numpy
 import torch
 import numpy as np
+import torchvision
 from matplotlib import pyplot as plt
 from scipy.io import loadmat
 from torch.utils.data import DataLoader, Dataset
 from torch.utils.data.dataset import T_co
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from torchvision.transforms import transforms
 
 
 class Mnist_dataset(Dataset):
@@ -17,31 +20,38 @@ class Mnist_dataset(Dataset):
     def __init__(self, root: str, dataset_name: str, ratio_pollution=None, random_state=None, train=True):
         super(Dataset, self).__init__()
 
-        root = 'F:/Università/Magistrale/MachineLearning/MLProject/MLproject/data'
-        self.data_file = os.path.join(root, 'mnist-original.mat')
-        print(self.data_file)
-        self.train = train
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        self.train=train
+        if train:
+            original_dataset = torchvision.datasets.MNIST(root='./data', train=True, download=True, transform=transform)
+        else:
+            original_dataset = torchvision.datasets.MNIST(root='./data', train=False, download=True, transform=transform)
+
+        self.data = original_dataset.data
+        self.target = original_dataset.targets
+        self.targets = torch.where(self.target == 2, 1, 0)
 
         self.semi_targets = None
         self.global_index = None
         self.label_known = None
         self.ps_label_known = None
 
-        mat = loadmat(self.data_file.__str__())
+        self.x_normal = self.data[self.targets == 0]
+        self.y_normal = self.targets[self.targets == 0]
 
-        anomaly_class = 2
+        self.x_anomalous = self.data[self.targets == 1]
+        self.y_anomalous = self.targets[self.targets == 1]
+
+        self.n_normal = len(self.x_normal)
+        self.n_outlier = len(self.x_anomalous)
+
+        '''anomaly_class = 2
 
         x = mat['data'].T
         y = mat['label'][0]
-
-        self.x_normal = x[y != anomaly_class]
-        self.y_normal = y[y != anomaly_class]
-
-        self.x_anomalous = x[y == anomaly_class]
-        self.y_anomalous = y[y == anomaly_class]
-
-        self.n_normal = sum(self.x_normal)
-        self.n_outlier = sum(self.x_anomalous)
 
         # Non utilizzando ratio_pollution = 0 non ho bisogno di un training sul dataset pulito senza anomalie
         x_train = np.concatenate([self.x_normal, self.x_anomalous], axis=0)
@@ -51,16 +61,25 @@ class Mnist_dataset(Dataset):
         #x_train_std = scaler.transform(x_train.astype(np.float32))
 
         #minmax_scaler = MinMaxScaler().fit(x_train_std.astype(np.float32))
-         #x_train_std = minmax_scaler.transform(x_train_std.astype(np.float32))
+        #x_train_std = minmax_scaler.transform(x_train_std.astype(np.float32))
 
-        self.data = torch.tensor(x_train, dtype=torch.float32)
-        self.targets = torch.tensor(y_train, dtype=torch.int64)
 
+        self.targets = torch.where(self.targets == 2, 1, 0)
+
+        self.test_set = torch.tensor(original_test_dataset, dtype=torch.float32)'''
+
+        # self.data = torch.tensor(original_dataset, dtype=torch.float32)
         self.semi_targets = torch.zeros_like(self.targets)
 
 
     def __getitem__(self, index):
         sample, target, semi_target = self.data[index], int(self.targets[index]), int(self.semi_targets[index])
+
+        transform = transforms.Compose([
+            transforms.ToTensor(),
+            transforms.Normalize((0.1307,), (0.3081,))
+        ])
+        sample = transform(sample.numpy())
 
         if self.label_known is not None:
             label_known = self.label_known[index]

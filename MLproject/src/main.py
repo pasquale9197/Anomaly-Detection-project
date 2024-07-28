@@ -141,7 +141,7 @@ def main(dataset_name, ratio_pollution, al_loss, qs_type, ps_abnormal, seed, n_r
         print('========================================')
 
         # Set seed
-        cfg.settings['seed'] = n_repeat_idx+1  #    1, 2, 3, 4, 5
+        cfg.settings['seed'] = n_repeat_idx+1  # 1, 2, 3, 4, 5
 
         if cfg.settings['seed'] != -1:
             random.seed(cfg.settings['seed'])

@@ -15,10 +15,9 @@ from MLProject.MLproject.src.datasets.mnist import MNISTADDDataset
 
 class DeepSVDMnistTrainer(BaseTrainer):
 
-
     def __init__(self, R, c, nu, eta: float, n_epochs: int = 150, batch_size: int = 128,
                  weight_decay: float = 1e-6, lr: float = 0.001, optimizer_name: str = 'adam',
-                 device: str = 'cpu', n_jobs_dataloader: int = 0, al_loss=-1):
+                 device: str = 'cuda', n_jobs_dataloader: int = 0, al_loss=-1):
         super().__init__(optimizer_name, lr, n_epochs, batch_size, weight_decay, device, n_jobs_dataloader)
 
         self.R = torch.tensor(R, device=self.device)
@@ -37,7 +36,6 @@ class DeepSVDMnistTrainer(BaseTrainer):
         self.test_auc = None
         self.test_time = None
         self.test_scores = None
-
 
     def train(self, dataset: MNISTADDDataset, net: BaseNet):
         train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
@@ -72,10 +70,13 @@ class DeepSVDMnistTrainer(BaseTrainer):
 
                 if self.al_loss=='one_class_uai' or self.al_loss=='soft_boundary_uai':
                     if len(semi_targets[semi_targets==1]) > 0 or len(semi_targets[semi_targets==-1]) > 0:
-                        reg_outputs = net.forward_uai(outputs, dist)
+                        # reg_outputs = net.forward_uai(outputs, dist)
+                        s = torch.unsqueeze(dist, 1)
+                        concat = torch.cat(([rep, s]), dim=1)
+                        reg_outputs = net.output_activation(net.reg(concat))
 
-                        reg_normal = reg_outputs[semi_targets==1]
-                        reg_abnormal = reg_outputs[semi_targets==-1]
+                        reg_normal = reg_outputs[semi_targets == 1]
+                        reg_abnormal = reg_outputs[semi_targets == -1]
 
                         reg_target = torch.cat([torch.zeros(reg_normal.shape), torch.ones(reg_abnormal.shape)])
 
@@ -91,7 +92,7 @@ class DeepSVDMnistTrainer(BaseTrainer):
                 if(self.al_loss == 'soft_boundary_nce') and (epoch >= self.warm_up_n_epochs):
                     self.R.data = torch.tensor(get_radius(dist, self.nu), device=self.device)
 
-                epoch_loss += loss.item()
+                epoch_loss = loss.item()
                 n_batches += 1
 
             self.test(dataset, net, silent=False)
@@ -120,9 +121,11 @@ class DeepSVDMnistTrainer(BaseTrainer):
                 idx = idx.to(self.device)
 
                 rep, outputs = net(inputs)
-                # dist = torch.sum((outputs - self.c) ** 2, dim=1)
-                scores = torch.softmax(outputs, dim=1) if outputs.size(1) > 1 else outputs.squeeze()
-                # scores = dist
+                if self.c is None:
+                    self.c = torch.mean(rep, dim=0)
+                dist = torch.sum((rep - self.c) ** 2, dim=1)
+                # scores = torch.softmax(outputs, dim=1) if outputs.size(1) > 1 else outputs.squeeze()
+                scores = dist
                 losses = torch.sum((rep - self.c) ** 2, dim=1)
                 loss = torch.mean(losses)
 
@@ -145,8 +148,8 @@ class DeepSVDMnistTrainer(BaseTrainer):
         self.outputs = outputs
 
         # Check the shape of labels and scores
-        if labels.ndim == 1 and scores.ndim == 2 and scores.shape[1] == 10:
-            self.test_auc = roc_auc_score(labels, scores, multi_class='ovr')
+        if labels.ndim == 1 and scores.ndim == 1:
+            self.test_auc = roc_auc_score(labels, scores)
         else:
             raise ValueError("Shape mismatch: Ensure that labels are 1D and scores have 10 columns for the 10 classes.")
 

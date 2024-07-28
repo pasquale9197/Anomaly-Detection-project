@@ -15,13 +15,15 @@ class MNISTADDDataset(Mnist_dataset):
         self.ratio_pollution = ratio_pollution
 
         self.train_set = Mnist_dataset(root=root, dataset_name=dataset_name,
-                                       ratio_pollution=ratio_pollution, random_state=random_state, train=True )
+                                       ratio_pollution=ratio_pollution, random_state=random_state, train=True)
+        self.test_set = Mnist_dataset(root=root, dataset_name=dataset_name, ratio_pollution=ratio_pollution,
+                                      random_state=random_state, train=False)
 
         self.un = self.train_set.n_normal
         self.ua = self.train_set.n_outlier
         self.n_data = self.un + self.ua
 
-        '''if not label_known:
+        if not label_known:
             self.label_known = np.zeros(self.n_data)
         else:
             self.label_known = label_known
@@ -29,7 +31,7 @@ class MNISTADDDataset(Mnist_dataset):
         if not ps_label_known:
             self.ps_label_known = np.zeros(self.n_data)
         else:
-            self.ps_label_known = ps_label_known'''
+            self.ps_label_known = ps_label_known
 
         self.train_set.label_known = self.label_known
         self.train_set.ps_label_known = self.ps_label_known
@@ -53,8 +55,9 @@ class MNISTADDDataset(Mnist_dataset):
     def loaders(self, batch_size: int, shuffle_train=True, shuffle_test=False, num_workers: int = 0) ->(
         DataLoader, DataLoader):
         train_loader = DataLoader(dataset=self.train_set, batch_size=batch_size, shuffle=shuffle_train,
-                                  num_workers=num_workers,drop_last=True)
-        test_loader = DataLoader(dataset=self.train_set, batch_size=batch_size, shuffle=shuffle_test,
+                                  num_workers=num_workers, drop_last=True)
+
+        test_loader = DataLoader(dataset=self.test_set, batch_size=batch_size, shuffle=shuffle_test,
                                  num_workers=num_workers, drop_last=False)
         return train_loader, test_loader
 
