@@ -19,13 +19,13 @@ from MLProject.MLproject.src.optim.mnist_trainer_obj import Mnist_trainer_obj
 # Define dataset path
 root = 'MLProject/MLproject/data/mnist-original.mat'  # Specify the correct path
 dataset_name = 'mnist-original'
-n_al_iter = 2
+n_al_iter = 1
 numQueriesRate = 0.01
 
 # Initialize neural network
 x_dim = 28 * 28  # Input dimension for MNIST images 28x28
 net = MLP_MNIST(x_dim)
-n_repeat = 5
+n_repeat = 2
 total_dists = []  # (n_al_iter, n_data)
 total_z_datas = []  # (n_al_iter, n_data, hidden_size)
 ps_abnormal = True
