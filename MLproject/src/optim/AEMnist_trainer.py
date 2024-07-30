@@ -1,5 +1,6 @@
 import pdb
 import time
+
 import torch
 import numpy as np
 import torch.nn as nn
@@ -15,7 +16,7 @@ from MLProject.MLproject.src.datasets.mnist import MNISTADDDataset
 class AEMnist_trainer(BaseTrainer):
 
     def __init__(self, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 50,
-                 batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda', n_jobs_dataloader: int = 0):
+                 batch_size: int = 30, weight_decay: float = 1e-6, device: str = 'cuda', n_jobs_dataloader: int = 0):
         super().__init__(optimizer_name, lr, n_epochs, batch_size, weight_decay, device, n_jobs_dataloader)
 
         # Results
@@ -27,7 +28,8 @@ class AEMnist_trainer(BaseTrainer):
     def train(self, dataset: MNISTADDDataset, ae_net: BaseNet):
         # Get train Esempi loader
         print('Starting pretrain')
-        train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+        # Utilizzo un badget di 31 elementi
+        train_loader, _ = dataset.loaders(batch_size=200, num_workers=self.n_jobs_dataloader)
 
         # Set loss
         criterion = nn.MSELoss(reduction='none')
@@ -78,6 +80,8 @@ class AEMnist_trainer(BaseTrainer):
 
     def test(self, dataset: MNISTADDDataset, ae_net: BaseNet):
         # Get test Esempi loader
+
+
         _, test_loader = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
 
         # Set loss
@@ -117,6 +121,15 @@ class AEMnist_trainer(BaseTrainer):
         _, labels, scores = zip(*idx_label_score)
         self.labels = np.array(labels)
         self.scores = np.array(scores)
-        self.test_auc = roc_auc_score(labels, scores)
+        '''# Convert labels to binary format: 0 for normal (2) and 1 for anomalies (0, 1, 3, 4, 5, 6, 7, 8, 9)
+        labels_binary = np.where(np.isin(self.labels, [2]), 0, 1)
+
+        # Handle one-vs-rest classification correctly
+        scores_ndarray = self.scores.squeeze()  # Ensure scores are 1D if necessary
+
+        # Handle binary classification'''
+
+        self.test_auc = roc_auc_score(labels, scores, multi_class='ovr')
+        # self.test_auc = roc_auc_score(labels, torch.tensor(self.scores).float().cpu().numpy().squeeze(), multi_class='ovr')
 
         print('Finished pretraining test.')

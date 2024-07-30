@@ -38,11 +38,11 @@ class DeepSVDMnistTrainer(BaseTrainer):
         self.test_scores = None
 
     def train(self, dataset: MNISTADDDataset, net: BaseNet):
-        train_loader, _ = dataset.loaders(batch_size=self.batch_size, num_workers=self.n_jobs_dataloader)
+        train_loader, _ = dataset.loaders(batch_size=200, num_workers=self.n_jobs_dataloader)
         net = net.to(self.device)
         optimizer = optim.Adam(net.parameters(), lr=self.lr, weight_decay=self.weight_decay)
         reg_loss = torch.nn.BCELoss()
-        if self.c is None:
+        if self.c is None or torch.isnan(self.c).any:
             self.c = self.init_center_c(train_loader, net)
         td_ascores = []
 
@@ -121,7 +121,7 @@ class DeepSVDMnistTrainer(BaseTrainer):
                 idx = idx.to(self.device)
 
                 rep, outputs = net(inputs)
-                if self.c is None:
+                if self.c is None or torch.isnan(self.c).any:
                     self.c = torch.mean(rep, dim=0)
                 dist = torch.sum((rep - self.c) ** 2, dim=1)
                 # scores = torch.softmax(outputs, dim=1) if outputs.size(1) > 1 else outputs.squeeze()
@@ -140,19 +140,18 @@ class DeepSVDMnistTrainer(BaseTrainer):
         self.test_scores = idx_label_score
 
         _, labels, scores, outputs = zip(*idx_label_score)
-        labels = np.array(labels)
-        scores = np.array(scores)
-        outputs = np.array(outputs)
+        self.outputs = np.array(outputs)
+        self.labels = np.array(labels)
+        self.scores = np.array(scores)
 
-        self.scores = scores
-        self.outputs = outputs
+        '''# Convert labels to binary format: 0 for normal (2) and 1 for anomalies (0, 1, 3, 4, 5, 6, 7, 8, 9)
+        labels_binary = np.where(np.isin(self.labels, [2]), 0, 1)
+        # Handle one-vs-rest classification correctly
+        scores_ndarray = self.scores.squeeze()  # Ensure scores are 1D if necessary
 
-        # Check the shape of labels and scores
-        if labels.ndim == 1 and scores.ndim == 1:
-            self.test_auc = roc_auc_score(labels, scores)
-        else:
-            raise ValueError("Shape mismatch: Ensure that labels are 1D and scores have 10 columns for the 10 classes.")
+        # Handle binary classification'''
 
+        self.test_auc = roc_auc_score(labels, scores, multi_class='ovr')
         if not silent:
                 print('Test Loss {:.6f}'.format(epoch_loss/n_batches))
                 print('Test AUC: {:.2f}%'.format(100. * self.test_auc))

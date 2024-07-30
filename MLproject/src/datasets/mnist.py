@@ -52,10 +52,10 @@ class MNISTADDDataset(Mnist_dataset):
         self.ps_label_known = ps_label_known
         self.train_set.ps_label_known = ps_label_known
 
-    def loaders(self, batch_size: int, shuffle_train=True, shuffle_test=False, num_workers: int = 0) ->(
+    def loaders(self, batch_size: int, shuffle_train=True, shuffle_test=True, num_workers: int = 0) ->(
         DataLoader, DataLoader):
         train_loader = DataLoader(dataset=self.train_set, batch_size=batch_size, shuffle=shuffle_train,
-                                  num_workers=num_workers, drop_last=True)
+                                  num_workers=num_workers, drop_last=False)
 
         test_loader = DataLoader(dataset=self.test_set, batch_size=batch_size, shuffle=shuffle_test,
                                  num_workers=num_workers, drop_last=False)

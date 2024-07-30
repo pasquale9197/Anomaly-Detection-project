@@ -19,13 +19,13 @@ from MLProject.MLproject.src.optim.mnist_trainer_obj import Mnist_trainer_obj
 # Define dataset path
 root = 'MLProject/MLproject/data/mnist-original.mat'  # Specify the correct path
 dataset_name = 'mnist-original'
-n_al_iter = 1
+n_al_iter = 15
 numQueriesRate = 0.01
 
 # Initialize neural network
 x_dim = 28 * 28  # Input dimension for MNIST images 28x28
 net = MLP_MNIST(x_dim)
-n_repeat = 2
+n_repeat = 5
 total_dists = []  # (n_al_iter, n_data)
 total_z_datas = []  # (n_al_iter, n_data, hidden_size)
 ps_abnormal = True
@@ -36,8 +36,8 @@ R = 1.0
 c = None
 nu = 0.1
 eta = 1.0
-n_epochs = 10
-batch_size = 256
+n_epochs = 100
+batch_size = 30
 weight_decay = 1e-6
 lr = 0.001
 optimizer_name = 'adam'
@@ -46,7 +46,6 @@ device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 def print_candidate_distribution(query_idx, dataset):
     labels = dataset.target[query_idx]  # Ottieni i label dei candidati
-    labels_abn = dataset.targets[query_idx]
     numbers, counts = np.unique(labels, return_counts=True)
     specific_numbers = [1, 2,  3, 4, 5, 6, 7, 8, 9]
     specific_counts = {num: 0 for num in specific_numbers}
@@ -65,16 +64,7 @@ def print_candidate_distribution(query_idx, dataset):
     x = list(specific_counts.keys())
     y = list(specific_counts.values())
 
-    # Scatter plot
-    plt.figure(figsize=(12, 5))
-    plt.subplot(1, 2, 1)
-    plt.scatter(x, y, color='blue')
-    plt.xlabel('Numbers')
-    plt.ylabel('Counts')
-    plt.title('Scatter Plot of Candidate Distribution')
-
     # Histogram
-    plt.subplot(1, 2, 2)
     plt.bar(x, y, color='green')
     plt.xlabel('Numbers')
     plt.ylabel('Counts')
@@ -133,10 +123,10 @@ for n_repeat_idx in range(n_repeat):
         trainer = Mnist_trainer_obj()
         trainer.set_network('MLP_MNIST')
         if pretrain:  ## Pretrain model on datasets (via autoencoder)
-            trainer.pretrain(dataset, optimizer_name=optimizer_name, lr=lr, n_epochs=n_epochs, batch_size=batch_size,
+            trainer.pretrain(dataset, optimizer_name=optimizer_name, lr=lr, n_epochs=50, batch_size=batch_size,
                              weight_decay=weight_decay, device=device, n_jobs_dataloader=n_jobs_dataloader)
 
-        trainer.train(dataset, optimizer_name=optimizer_name, lr=lr, n_epochs=n_epochs, batch_size=batch_size, weight_decay=weight_decay,
+        trainer.train(dataset, optimizer_name=optimizer_name, lr=lr, n_epochs=n_epochs, batch_size=50, weight_decay=weight_decay,
                   device=device, n_jobs_dataloader=n_jobs_dataloader, al_loss=al_loss)
 
         auc, dist, z_data = trainer.test(dataset=dataset, device=device, n_jobs_dataloader=n_jobs_dataloader)
@@ -145,7 +135,7 @@ for n_repeat_idx in range(n_repeat):
         aucs = np.append(aucs, auc)
         total_dist = np.append(total_dists, dist)
         total_z_datas = np.append(total_z_datas, z_data)
-        # total_z_centers = np.append(total_z_centers, trainer.c.cpu().numpy().copy().tolist())
+        # total_z_centers = np.append(total_z_centers, self.c)
 
         print('\tTest:: AUC: {:.4f}\t(Max (Stage {}): {:4f})\t(Stage 0: {:.4f})\n'.format(auc, np.argmax(aucs), max(aucs), aucs[0]))
 
@@ -157,16 +147,20 @@ for n_repeat_idx in range(n_repeat):
 
         candidate_idx = np.where(trainset_label_known == 0)[0]
 
-        candidate_idx = candidate_idx[candidate_idx < len(ascore)]
-        print(f"Candidate index size: {len(candidate_idx)}")
+        # candidate_idx = candidate_idx[candidate_idx < len(ascore)]
+        # print(f"Candidate index size: {len(candidate_idx)}")
 
         if al_iter_idx == 0:
             qp = 0.8  # query point for adaptive linear
             qps = [qp]
-            valid_indices = np.arange(len(ascore))  # Modifica
-            valid_indices = valid_indices[int(len(ascore) * qp):int(len(ascore) * qp) + numQueries]
-            valid_indices = valid_indices[valid_indices < len(ascore)]  # Assicurarsi che gli indici siano validi
-            sortIdx = valid_indices
+            sortIdx = np.argsort(ascore)
+            sortIdx = sortIdx[int(n_data * qp):int(n_data * qp) + numQueries]
+
+
+            # valid_indices = np.arange(len(ascore))  # Modifica
+            # valid_indices = valid_indices[int(len(ascore) * qp):int(len(ascore) * qp) + numQueries]
+            # valid_indices = valid_indices[valid_indices < len(ascore)]  # Assicurarsi che gli indici siano validi
+            # sortIdx = valid_indices
 
         else:
             n_qanomal = training_labels[queryIdx].sum().item()  # from the previous query information
@@ -183,7 +177,7 @@ for n_repeat_idx in range(n_repeat):
                 qp = 2 * (1 - qp) * p_qnormal + (2 * qp - 1)
             qps.append(qp)
 
-            sortIdx = np.argsort(ascore[candidate_idx])
+            # sortIdx = np.argsort(ascore[candidate_idx])
 
             if int(len(candidate_idx) * qp) + numQueries > len(sortIdx):  # Ensure it doesn't go out of bounds
                 sortIdx = sortIdx[-numQueries:]
@@ -211,11 +205,11 @@ for n_repeat_idx in range(n_repeat):
             print(f"candidate_idx size: {len(candidate_idx)}, ascore size: {len(ascore)}")
             print(f"labeled_idx size: {len(labeled_idx)}")
 
+            labeled_abnormal_idx = np.where(np.array(training_labels)[np.where(trainset_label_known == 1)[0]] == 1)[0]
+
             # Assicurarsi che gli indici siano validi
             candidate_idx = candidate_idx[candidate_idx < len(ascore)]
             labeled_idx = labeled_idx[labeled_idx < len(ascore)]
-
-            labeled_abnormal_idx = np.where(np.array(training_labels)[labeled_idx] == 1)[0]
 
             # Debug: stampa le dimensioni dopo il filtraggio
             print(f"filtered candidate_idx size: {len(candidate_idx)}")
@@ -229,6 +223,13 @@ for n_repeat_idx in range(n_repeat):
                 ps_numQueries = numQueries
                 sortIdx = candidate_idx[sortIdx[-ps_numQueries:]]
             else:
+                '''labeled_abnormal_idx = labeled_idx[labeled_abnormal_idx]
+                candidate_idx = candidate_idx[ascore[candidate_idx] >= np.median(ascore[labeled_abnormal_idx])]
+                n_half_of_candidates = int(np.where(trainset_label_known == 0)[0].shape[0] * 0.5)
+                if candidate_idx.shape[0] > n_half_of_candidates:
+                    sortIdx = np.random.choice(candidate_idx, n_half_of_candidates)
+                else:
+                    sortIdx = candidate_idx.copy()'''
                 labeled_abnormal_idx = labeled_abnormal_idx[labeled_abnormal_idx < len(ascore)]
                 labeled_abnormal_idx = np.clip(labeled_abnormal_idx, 0, len(labeled_idx) - 1)
                 labeled_abnormal_idx = labeled_idx[labeled_abnormal_idx]
@@ -259,7 +260,7 @@ for n_repeat_idx in range(n_repeat):
             dataset.update_ps_label_known(trainset_ps_label_known)
             print('\tAL Stage time: {:.3f}s'.format(time.time() - t_start_al_iter))
 
-            print_candidate_distribution(queryIdx, dataset)
+            # print_candidate_distribution(queryIdx, dataset)
 
         print('   =========================================== DONE ===========================================')
 
@@ -267,8 +268,6 @@ for n_repeat_idx in range(n_repeat):
         # ''' == Save results & Visualization == '''
         # ''' ================================== '''
         aucs = np.array(aucs)  # (n_al_iters,)
-
-        total_label_known = np.array(total_label_known)  # (n_al_iters, n_data)
 
         test_targets = np.array(training_labels)
         total_label_known = np.array(total_label_known)  # (n_al_iters, n_data)

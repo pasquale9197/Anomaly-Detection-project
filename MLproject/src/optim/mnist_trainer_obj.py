@@ -24,7 +24,7 @@ class Mnist_trainer_obj(object):
 
         self.ae_net = None
         self.net = None
-
+        self.batch_size = 30
         self.ae_net = None  # autoencoder network for pretraining
         self.ae_trainer = None
         self.ae_optimizer_name = None
@@ -49,8 +49,8 @@ class Mnist_trainer_obj(object):
         self.net = MLP_MNIST(x_dim=784, h_dims=[512, 256], rep_dim=64, bias=False, num_classes=10)
 
     # pensa se fare pretrain
-    def pretrain(self, dataset: MNISTADDDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 100,
-                 batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
+    def pretrain(self, dataset: MNISTADDDataset, optimizer_name: str = 'adam', lr: float = 0.001, n_epochs: int = 50,
+                 batch_size: int = 30, weight_decay: float = 1e-6, device: str = 'cuda',
                  n_jobs_dataloader: int = 0):
         """Pretrains the weights for the Deep SAD network phi via autoencoder."""
         self.ae_net = build_autoencoder()
@@ -73,7 +73,7 @@ class Mnist_trainer_obj(object):
         self.model_pretrained = True
 
     def train(self, dataset: MNISTADDDataset, optimizer_name: str = 'adam', lr: float = 0.001,
-              n_epochs: int = 50, batch_size: int = 128, weight_decay: float = 1e-6, device: str = 'cuda',
+              n_epochs: int = 50, batch_size: int = 30, weight_decay: float = 1e-6, device: str = 'cuda',
               n_jobs_dataloader: int = 0, al_mode=None, al_loss=-1):
         self.al_mode = al_mode
         self.al_loss = al_loss

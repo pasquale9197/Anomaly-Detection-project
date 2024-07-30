@@ -264,6 +264,19 @@ def main(dataset_name, ratio_pollution, al_loss, qs_type, ps_abnormal, seed, n_r
                     sortIdx = np.argsort(candidate_value)
                     sortIdx = candidate_idx[sortIdx]
 
+
+
+
+
+
+
+
+
+
+
+
+
+
                 elif qs_type == 'abs':  # adaptive boundary search
                     if al_iter_idx == 0:
                         qp = 0.8  # query point for adaptive linear
